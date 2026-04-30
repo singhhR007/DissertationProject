@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.idea/
+
+payload-both.json
+payload-neither.json
+
+artefacts/
+outputs/
+outputs_retrain/
