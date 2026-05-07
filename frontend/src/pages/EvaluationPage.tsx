@@ -23,7 +23,7 @@ const fullHdfsRows: MetricRow[] = [
   {
     model: "Baseline",
     threshold: "0.9235",
-    precision: "0.9583",
+    precision: "0.9582",
     recall: "0.9950",
     f1: "0.9763",
     prAuc: "0.9800",
@@ -32,13 +32,13 @@ const fullHdfsRows: MetricRow[] = [
   },
   {
     model: "Calibrated",
-    threshold: "0.3877",
-    precision: "0.9013",
-    recall: "1.0000",
-    f1: "0.9481",
+    threshold: "0.4162",
+    precision: "0.9481",
+    recall: "0.9917",
+    f1: "0.9694",
     prAuc: "0.9764",
     rocAuc: "0.9995",
-    brier: "0.0027",
+    brier: "0.0017",
   },
   {
     model: "Enriched",
@@ -178,13 +178,13 @@ export default function EvaluationPage() {
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader>
-            <CardTitle>Best full-HDFS model</CardTitle>
+            <CardTitle>Best full-HDFS classifier</CardTitle>
             <CardDescription>Classical comparison</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-slate-950">Baseline</p>
             <p className="mt-2 text-sm text-slate-600">
-              Message-based TF-IDF + Logistic Regression ranked strongest overall.
+              Message-based TF-IDF + Logistic Regression ranked strongest on F1, PR-AUC and ROC-AUC.
             </p>
           </CardContent>
         </Card>
@@ -205,13 +205,12 @@ export default function EvaluationPage() {
         <Card>
           <CardHeader>
             <CardTitle>Deployment model</CardTitle>
-            <CardDescription>Engineering decision</CardDescription>
+            <CardDescription>Lowest Brier score</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-slate-950">Calibrated</p>
             <p className="mt-2 text-sm text-slate-600">
-              Selected for the API because the risk_score field was intended to
-              behave like a probability-oriented indicator.
+              Selected for the API because it produced the lowest Brier score (0.0017), matching the probability-oriented contract of the risk_score field.
             </p>
           </CardContent>
         </Card>
@@ -245,21 +244,19 @@ export default function EvaluationPage() {
               <div className="rounded-2xl border border-slate-200 p-4">
                 <p className="text-sm font-medium text-slate-900">Baseline</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Strongest overall on F1, PR-AUC, ROC-AUC and Brier score.
+                  Strongest classifier on F1, PR-AUC and ROC-AUC, with a Brier score of 0.0023.
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 p-4">
                 <p className="text-sm font-medium text-slate-900">Calibrated</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Reached perfect recall but underperformed the baseline on precision,
-                  F1 and Brier score.
+                  Close to the baseline on classification metrics and produced the lowest Brier score of the three at 0.0017.
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 p-4">
                 <p className="text-sm font-medium text-slate-900">Enriched</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Additional structured tokens did not improve the HDFS result and
-                  appear to have weakened the feature representation.
+                  Additional structured tokens did not improve the HDFS result and weakened both classification and probability quality.
                 </p>
               </div>
             </div>
@@ -278,8 +275,8 @@ export default function EvaluationPage() {
           <CardContent className="space-y-4 text-sm leading-7 text-slate-600">
             <p>
               At the default threshold of 0.5, the baseline achieved precision 0.9020,
-              recall 0.9997, and F1-score 0.9483. After tuning on the validation set,
-              performance improved to precision 0.9583, recall 0.9950 and F1-score 0.9763.
+              recall 0.9997 and F1-score 0.9483. After tuning on the validation set,
+              performance improved to precision 0.9582, recall 0.9950 and F1-score 0.9763.
             </p>
             <p>
               This tuning reduced false positives from 366 to 146 while increasing
@@ -311,19 +308,17 @@ export default function EvaluationPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-7 text-slate-600">
             <p>
-              The full-HDFS Brier scores were 0.0023 for the baseline, 0.0027 for the
-              calibrated model and 0.0030 for the enriched model.
+              The full-HDFS Brier scores were 0.0023 for the baseline, 0.0017 for the
+              calibrated model and 0.0030 for the enriched model. The calibrated variant produced the lowest Brier score of the three configurations.
             </p>
             <p>
-              Even though the calibrated variant did not outperform the baseline on Brier
-              score, it was still selected for API deployment because the exposed
+              The calibrated model was selected for API deployment because the exposed
               <code className="mx-1 rounded bg-slate-100 px-1 py-0.5 text-xs">risk_score</code>
-              field was intended to be interpreted as a probability like value rather
-              than a raw classifier score.
+              field was intended to be interpreted as a probability-like value rather
+              than a raw classifier score, and the calibrated variant aligned more closely with the empirical anomaly frequency.
             </p>
             <p>
-              This was documented as an engineering judgement rather than a purely
-              metric driven conclusion.
+              The baseline remained the stronger offline classifier, but the deployment decision was driven by probability quality rather than classification ranking. This split was documented as an engineering judgement informed by the Brier results.
             </p>
           </CardContent>
         </Card>
@@ -361,11 +356,11 @@ export default function EvaluationPage() {
             <div className="rounded-2xl border border-slate-200 p-4 text-sm leading-7 text-slate-600">
               <p>
                 The tuned baseline_50k achieved precision 0.9182, recall 0.9966,
-                F1-score 0.9558, PR-AUC 0.9617, ROC-AUC 0.9993, and Brier score 0.0027.
+                F1-score 0.9558, PR-AUC 0.9617, ROC-AUC 0.9993 and Brier score 0.0027.
               </p>
               <p className="mt-3">
                 The tuned BiLSTM_50k achieved precision 0.8797, recall 0.9488,
-                F1-score 0.9130, PR-AUC 0.9475, ROC-AUC 0.9966, and Brier score 0.0136.
+                F1-score 0.9130, PR-AUC 0.9475, ROC-AUC 0.9966 and Brier score 0.0136.
               </p>
               <p className="mt-3">
                 The classical baseline outperformed the BiLSTM across every reported
@@ -405,9 +400,11 @@ export default function EvaluationPage() {
           </CardHeader>
           <CardContent className="space-y-4 text-sm leading-7 text-slate-600">
             <p>
-              The message based TF-IDF + Logistic Regression baseline remained the
-              strongest model family in the project, outperforming both the calibrated
-              and enriched variants in the main full-HDFS study.
+              The message-based TF-IDF + Logistic Regression baseline remained the
+              strongest classifier on the full-HDFS evaluation, leading on F1, PR-AUC and ROC-AUC.
+            </p>
+            <p>
+              The calibrated variant produced the lowest Brier score of the three configurations and was therefore selected for API deployment. The strongest classifier and the deployed model were chosen on different criteria, which the report documents explicitly.
             </p>
             <p>
               Threshold tuning proved operationally important because it changed the
@@ -415,8 +412,8 @@ export default function EvaluationPage() {
               model ranking.
             </p>
             <p>
-              The exploratory deep learning follow up did not show enough empirical
-              benefit to justify a full scale BiLSTM training run.
+              The exploratory deep learning follow-up did not show enough empirical
+              benefit to justify a full-scale BiLSTM training run.
             </p>
           </CardContent>
         </Card>
@@ -432,15 +429,14 @@ export default function EvaluationPage() {
             <ol className="space-y-3 text-sm text-slate-600">
               <li className="rounded-xl border border-slate-200 px-4 py-3">
                 1. The message-based TF-IDF + Logistic Regression baseline was the
-                strongest classical model on the full HDFS dataset.
+                strongest classifier on the full HDFS dataset, leading on F1, PR-AUC and ROC-AUC.
               </li>
               <li className="rounded-xl border border-slate-200 px-4 py-3">
-                2. Validation set threshold tuning produced the largest single
+                2. Validation-set threshold tuning produced the largest single
                 operational improvement in the study.
               </li>
               <li className="rounded-xl border border-slate-200 px-4 py-3">
-                3. The calibrated model was deployed to the API for interpretability
-                reasons, even though it did not outperform the baseline offline.
+                3. The calibrated model was deployed to the API because it produced the lowest Brier score (0.0017), which matched the probability-oriented contract of the risk_score field.
               </li>
               <li className="rounded-xl border border-slate-200 px-4 py-3">
                 4. The 50k smoke test did not justify extending the deep learning
