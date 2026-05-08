@@ -78,17 +78,17 @@ def _get_classifier_scores(classifier: Any, features: Any) -> np.ndarray:
     raise TypeError("Classifier must expose decision_function or predict_proba.")
 
 
-def _predict_anomalous_probability(model_artefact: Any, features: Any) -> float:
-    """
-    Return the deployed anomalous-class probability for one feature row.
-    """
+def _predict_anomalous_probability(model_artefact, transformed) -> float:
     if model_artefact.calibrator is not None:
-        raw_scores = _get_classifier_scores(model_artefact.classifier, features)
-        calibrated = model_artefact.calibrator.predict_proba(raw_scores.reshape(-1, 1))[:, 1]
+        calibrated = model_artefact.calibrator.predict_proba(transformed)[:, 1]
         return float(calibrated[0])
 
-    probabilities = model_artefact.classifier.predict_proba(features)[:, 1]
-    return float(probabilities[0])
+    if hasattr(model_artefact.classifier, "predict_proba"):
+        probabilities = model_artefact.classifier.predict_proba(transformed)[:, 1]
+        return float(probabilities[0])
+
+    raw_scores = model_artefact.classifier.decision_function(transformed)
+    return float(raw_scores[0])
 
 
 def _derive_prediction_label(risk_score: float, threshold: float) -> PredictionLabel:
